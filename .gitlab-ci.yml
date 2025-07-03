@@ -1,10 +1,19 @@
 image: node:18-bullseye
+include:
+  - project: CLOUD/AWS/TOOLS-AND-UTILITIES/TEMPLATES/gitlab-ci-templates
+    ref: main
+    file: assume_role.yml
 
 stages:
   - build
   - deploy
 
-default:
+.deploy-template:
+  variables:
+    DEPLOY_ROLE_ARN: arn:${PARTITION}:iam::${ACCOUNT_ID}:role/gov-automation-roles-admin-gitlabscaniacom
+  before_script:
+    - echo $DEPLOY_ROLE_ARN
+    - !reference [.assume_role]
   tags:
     - vanilla
   id_tokens: # Support for id_tokens introduced in GitLab 16.4
@@ -23,10 +32,12 @@ build:
   stage: build
   script:
     - npm ci
+    - npx ampx generate outputs --app-id $AMPLIFY_APP_ID --branch main || cp amplify_outputs.example.json amplify_outputs.json
     - npm run build
   artifacts:
     paths:
       - dist/
+      - amplify_outputs.json
     expire_in: 1 hour
 
 deploy:
