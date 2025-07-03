@@ -2,6 +2,14 @@ stages:
   - build
   - deploy
 
+default:
+  tags:
+    - vanilla
+  id_tokens: # Support for id_tokens introduced in GitLab 16.4. Dec 6 according to devtools
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.scania.com
+  retry: 1
+
 variables:
   NODE_VERSION: "18"
 
