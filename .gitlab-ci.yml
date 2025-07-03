@@ -1,16 +1,22 @@
 image: node:18-bullseye
 include:
-  - project: CLOUD/AWS/TOOLS-AND-UTILITIES/TEMPLATES/gitlab-ci-templates
-    ref: main
-    file: assume_role.yml
+  - local: gitlab-ci-templates.yml
+
+variables:
+  PROFILE_NAME: default
+  ACCOUNT_ID: 134143989055
+  DEPLOY_ROLE_NAME: team-account-deploy-role
+  PARTITION: aws
+  REGION: eu-north-1
+  DEPLOY_ROLE_ARN: "arn:aws:iam::${ACCOUNT_ID}:role/${DEPLOY_ROLE_NAME}"
+  NODE_VERSION: "18"
 
 stages:
   - build
   - deploy
 
-.deploy-template:
-  variables:
-    DEPLOY_ROLE_ARN: arn:${PARTITION}:iam::${ACCOUNT_ID}:role/gov-automation-roles-admin-gitlabscaniacom
+default:
+  image: node:18-alpine
   before_script:
     - echo $DEPLOY_ROLE_ARN
     - !reference [.assume_role]
@@ -21,9 +27,6 @@ stages:
       aud: https://gitlab.scania.com
   retry: 1
 
-variables:
-  NODE_VERSION: "18"
-
 before_script:
   - apt-get update -qq && apt-get install -y -qq git curl
   - npm install -g @aws-amplify/cli@latest
@@ -32,7 +35,7 @@ build:
   stage: build
   script:
     - npm ci
-    - npx ampx generate outputs --app-id $AMPLIFY_APP_ID --branch main || cp amplify_outputs.example.json amplify_outputs.json
+    - npx ampx generate outputs --app-id $AMPLIFY_APP_ID --branch main --profile $PROFILE_NAME || cp amplify_outputs.example.json amplify_outputs.json
     - npm run build
   artifacts:
     paths:

@@ -1,0 +1,22 @@
+# Shared setup templates
+.assume_role:
+    - aws --version
+    - echo $REGION
+    - echo $DEPLOY_ROLE_ARN
+    - >
+      export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s"
+      $(aws sts assume-role-with-web-identity
+      --role-arn $DEPLOY_ROLE_ARN
+      --role-session-name "GitLabRunner-$CI_PROJECT_ID-$CI_PIPELINE_ID"
+      --web-identity-token $GITLAB_OIDC_TOKEN
+      --duration-seconds 3600
+      --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]'
+      --region $REGION
+      --output text))
+    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID --profile $PROFILE_NAME
+    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY --profile $PROFILE_NAME
+    - aws configure set aws_session_token $AWS_SESSION_TOKEN --profile $PROFILE_NAME
+    - aws configure set region $REGION --profile $PROFILE_NAME
+    - aws sts get-caller-identity --region $REGION --profile $PROFILE_NAME
+    - unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+    - ROLE_ARN=$DEPLOY_ROLE_ARN && PROFILE_NAME=$PROFILE_NAME
