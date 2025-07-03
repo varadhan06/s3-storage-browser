@@ -1,6 +1,6 @@
 image: node:18-bullseye
 include:
-  - local: gitlab-ci-templates.yml
+  - local: gitlab-ci-template.yml
 
 variables:
   PROFILE_NAME: default
