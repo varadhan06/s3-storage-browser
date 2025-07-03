@@ -1,6 +1,7 @@
-image: node:18-bullseye
 include:
   - local: gitlab-ci-template.yml
+
+image: node:18-bullseye
 
 variables:
   PROFILE_NAME: default
@@ -16,18 +17,16 @@ stages:
   - deploy
 
 default:
-  image: node:18-alpine
-  before_script:
-    - echo $DEPLOY_ROLE_ARN
-    - !reference [.assume_role]
   tags:
     - vanilla
-  id_tokens: # Support for id_tokens introduced in GitLab 16.4
+  id_tokens:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.scania.com
   retry: 1
 
 before_script:
+  - echo $DEPLOY_ROLE_ARN
+  - !reference [.assume_role]
   - apt-get update -qq && apt-get install -y -qq git curl
   - npm install -g @aws-amplify/cli@latest
 
