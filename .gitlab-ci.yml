@@ -1,3 +1,5 @@
+image: node:18-bullseye
+
 stages:
   - build
   - deploy
@@ -5,7 +7,7 @@ stages:
 default:
   tags:
     - vanilla
-  id_tokens: # Support for id_tokens introduced in GitLab 16.4. Dec 6 according to devtools
+  id_tokens: # Support for id_tokens introduced in GitLab 16.4
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.scania.com
   retry: 1
@@ -13,16 +15,12 @@ default:
 variables:
   NODE_VERSION: "18"
 
-
+before_script:
+  - apt-get update -qq && apt-get install -y -qq git curl
+  - npm install -g @aws-amplify/cli@latest
 
 build:
   stage: build
-  image: node:18-alpine
-  before_script:
-    - apt-get update -qq && apt-get install -y -qq git curl
-    - curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash -
-    - apt-get install -y nodejs
-    - npm install -g @aws-amplify/cli@latest
   script:
     - npm ci
     - npm run build
@@ -33,12 +31,6 @@ build:
 
 deploy:
   stage: deploy
-  image: node:18-alpine
-  before_script:
-    - apt-get update -qq && apt-get install -y -qq git curl
-    - curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash -
-    - apt-get install -y nodejs
-    - npm install -g @aws-amplify/cli@latest
   script:
     - npx ampx deploy --branch main
   environment:
