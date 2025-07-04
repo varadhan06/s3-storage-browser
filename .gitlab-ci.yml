@@ -39,6 +39,7 @@ build:
   stage: build
   script:
     - npm ci
+    - cp amplify_outputs.example.json amplify_outputs.json
     - npm run build
   artifacts:
     paths:
