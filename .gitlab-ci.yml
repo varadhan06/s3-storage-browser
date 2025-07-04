@@ -26,6 +26,10 @@ default:
 
 before_script:
   - echo $DEPLOY_ROLE_ARN
+  - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  - unzip awscliv2.zip
+  - ./aws/install
+  - aws --version
   - !reference [.assume_role]
   - apt-get update -qq && apt-get install -y -qq git curl
   - npm install -g @aws-amplify/cli@latest
