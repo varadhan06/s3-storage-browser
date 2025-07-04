@@ -8,17 +8,17 @@ This template equips you with a foundational React application integrated with A
 
 ## Features
 
-- **Authentication**: Setup with Amazon Cognito for secure user authentication with email login.   
-   - More info on how to setup and configuration option: https://docs.amplify.aws/react/build-a-backend/auth/set-up-auth/
+- **Authentication**: Setup with Amazon Cognito for secure user authentication with email login.
+  - More info on how to setup and configuration option: https://docs.amplify.aws/react/build-a-backend/auth/set-up-auth/
 - **Storage**: Configured with multiple S3 buckets and granular access controls. The sample is configured with
   - Default storage bucket with public, admin, and private access paths
   - Secondary storage bucket with separate backup paths.
   - More info on how to setup : https://docs.amplify.aws/react/build-a-backend/storage/set-up-storage/#building-your-storage-backend
 - **UI Components**: Pre-integrated Amplify UI React components including:
   - Authenticator for sign-in/sign-up flows
-      - More info : https://ui.docs.amplify.aws/react/connected-components/authenticator
+    - More info : https://ui.docs.amplify.aws/react/connected-components/authenticator
   - Storage Browser for S3 file management.
-      - More info : https://ui.docs.amplify.aws/react/connected-components/storage/storage-browser
+    - More info : https://ui.docs.amplify.aws/react/connected-components/storage/storage-browser
 
 ## Project Structure
 
@@ -38,17 +38,20 @@ This template equips you with a foundational React application integrated with A
 ### Installation
 
 1. Clone this repository
+
    ```bash
    git clone <repository-url>
-   cd sample-amplify-storage-browser
+   cd s3browser
    ```
 
 2. Install dependencies
+
    ```bash
    npm install
    ```
 
 3. Initialize and deploy the Amplify backend
+
    ```bash
    npx ampx sandbox
    ```
@@ -73,6 +76,5 @@ See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more inform
 ## License
 
 This library is licensed under the MIT-0 License. See the LICENSE file.
-
 
 _These sample applications are provided as a reference to help get started easily and are not supported by AWS Support._
