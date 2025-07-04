@@ -11,6 +11,7 @@ variables:
   REGION: eu-north-1
   DEPLOY_ROLE_ARN: "arn:aws:iam::${ACCOUNT_ID}:role/${DEPLOY_ROLE_NAME}"
   NODE_VERSION: "18"
+  APP_NAME: s3browser
 
 stages:
   - build
@@ -31,12 +32,25 @@ before_script:
   - ./aws/install
   - aws --version
   - !reference [.assume_role]
-  - apt-get update -qq && apt-get install -y -qq git curl
+  - apt-get update -qq && apt-get install -y -qq jq git curl
   - npm install -g @aws-amplify/cli@latest
 
 build:
   stage: build
   script:
+    # Create Amplify App
+    - aws amplify create-app --name $APP_NAME --region $REGION
+
+    # Retrieve Amplify App ID dynamically from AWS CLI
+    - >
+      AMPLIFY_APP_ID=$(aws amplify list-apps --region $REGION \
+        | jq -r '.apps[] | select(.name == $APP_NAME) | .appId') &&
+      echo "Discovered AMPLIFY_APP_ID=$AMPLIFY_APP_ID" &&
+      if [ -z "$AMPLIFY_APP_ID" ]; then
+        echo "❌ Amplify App ID not found, exiting.";
+        exit 1;
+      fi &&
+    # Proceed with build steps
     - npm ci
     - npx ampx generate outputs --app-id $AMPLIFY_APP_ID --branch main --profile $PROFILE_NAME || cp amplify_outputs.example.json amplify_outputs.json
     - npm run build
