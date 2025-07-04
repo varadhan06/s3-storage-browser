@@ -38,32 +38,27 @@ before_script:
 build:
   stage: build
   script:
-    # Create Amplify App
-    - aws amplify create-app --name $APP_NAME --region $REGION
-
-    # Retrieve Amplify App ID dynamically from AWS CLI
-    - >
-      AMPLIFY_APP_ID=$(aws amplify list-apps --region $REGION |
-        jq -r ".apps[] | select(.name == \"${APP_NAME}\") | .appId") &&
-      echo "Discovered AMPLIFY_APP_ID=$AMPLIFY_APP_ID" &&
-      if [ -z \"$AMPLIFY_APP_ID\" ]; then
-        echo "❌ Amplify App ID not found, exiting.";
-        exit 1;
-      fi &&
-    # Proceed with build steps
     - npm ci
-    - npx ampx generate outputs --app-id $AMPLIFY_APP_ID --branch main --profile $PROFILE_NAME || cp amplify_outputs.example.json amplify_outputs.json
     - npm run build
   artifacts:
     paths:
       - dist/
-      - amplify_outputs.json
     expire_in: 1 hour
 
 deploy:
   stage: deploy
   script:
+    # Deploy Amplify backend first
     - npx ampx deploy --branch main
+    
+    # Get the deployed app ID from the most recent app
+    - >
+      AMPLIFY_APP_ID=$(aws amplify list-apps --region $REGION |
+        jq -r '.apps | sort_by(.createTime) | last | .appId') &&
+      echo "Discovered AMPLIFY_APP_ID=$AMPLIFY_APP_ID"
+    
+    # Generate outputs after backend is deployed
+    - npx ampx generate outputs --app-id $AMPLIFY_APP_ID --branch main --profile $PROFILE_NAME
   environment:
     name: production
     url: https://s3.clad-playground.devtest.aws.scania.com
