@@ -16,7 +16,7 @@ const { StorageBrowser } = createStorageBrowser({
   config: createAmplifyAuthAdapter(),
 });
 
-function UserContent({ signOut, user }) {
+function UserContent({ signOut, user }: { signOut: () => void; user: any }) {
   const [displayName, setDisplayName] = useState(user?.username || '');
 
   useEffect(() => {
