@@ -44,7 +44,7 @@ build:
     # Retrieve Amplify App ID dynamically from AWS CLI
     - >
       AMPLIFY_APP_ID=$(aws amplify list-apps --region $REGION \
-        | jq -r '.apps[] | select(.name == $APP_NAME) | .appId') &&
+        | jq -r '.apps[] | select(.name == \"$APP_NAME\") | .appId') &&
       echo "Discovered AMPLIFY_APP_ID=$AMPLIFY_APP_ID" &&
       if [ -z "$AMPLIFY_APP_ID" ]; then
         echo "❌ Amplify App ID not found, exiting.";
