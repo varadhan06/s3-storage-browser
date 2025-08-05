@@ -1,67 +1,70 @@
-include:
-  - local: gitlab-ci-template.yml
-
-image: node:18-bullseye
-
-variables:
-  PROFILE_NAME: default
-  ACCOUNT_ID: 134143989055
-  DEPLOY_ROLE_NAME: team-account-deploy-role
-  PARTITION: aws
-  REGION: eu-north-1
-  DEPLOY_ROLE_ARN: "arn:aws:iam::${ACCOUNT_ID}:role/${DEPLOY_ROLE_NAME}"
-  NODE_VERSION: "18"
-  APP_NAME: s3browser
-
 stages:
   - build
   - deploy
 
+
+
+include:
+  - local: gitlab-ci-template.yml
+
 default:
+  image: public.ecr.aws/sam/build-nodejs22.x:latest
   tags:
-    - vanilla
+    - dind-amd64-linux
   id_tokens:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.scania.com
   retry: 1
 
+
+
+variables:
+  REGION: "eu-north-1"
+  PROFILE_NAME: "amplify-deploy"
+
 before_script:
-  - echo $DEPLOY_ROLE_ARN
-  - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-  - unzip awscliv2.zip
-  - ./aws/install
-  - aws --version
-  - !reference [.assume_role]
-  - apt-get update -qq && apt-get install -y -qq jq git curl
   - npm install -g @aws-amplify/cli@latest
+  - !reference [.assume_role]
 
 build:
   stage: build
   script:
     - npm ci
-    - cp amplify_outputs.example.json amplify_outputs.json
     - npm run build
   artifacts:
     paths:
       - dist/
     expire_in: 1 hour
-
-deploy:
-  stage: deploy
-  script:
-    # Deploy Amplify backend first
-    - npx ampx deploy --branch main
-    
-    # Get the deployed app ID from the most recent app
-    - >
-      AMPLIFY_APP_ID=$(aws amplify list-apps --region $REGION |
-        jq -r '.apps | sort_by(.createTime) | last | .appId') &&
-      echo "Discovered AMPLIFY_APP_ID=$AMPLIFY_APP_ID"
-    
-    # Generate outputs after backend is deployed
-    - npx ampx generate outputs --app-id $AMPLIFY_APP_ID --branch main --profile $PROFILE_NAME
-  environment:
-    name: production
-    url: https://s3.clad-playground.devtest.aws.scania.com
   only:
     - main
+    - develop
+
+deploy_backend:
+  stage: deploy
+  script:
+    - npx ampx configure --yes --profile ${PROFILE_NAME}
+    - npx ampx sandbox deploy --name ${CI_COMMIT_REF_SLUG} --profile ${PROFILE_NAME}
+    - npx ampx generate outputs --branch ${CI_COMMIT_REF_SLUG}
+  artifacts:
+    paths:
+      - amplify_outputs.json
+    expire_in: 1 hour
+  environment:
+    name: ${CI_COMMIT_REF_SLUG}
+  only:
+    - main
+    - develop
+
+deploy_frontend:
+  stage: deploy
+  dependencies:
+    - build
+    - deploy_backend
+  script:
+    - npm install -g @aws-amplify/cli
+    - amplify publish --yes --profile ${PROFILE_NAME}
+  environment:
+    name: ${CI_COMMIT_REF_SLUG}
+  only:
+    - main
+    - develop
