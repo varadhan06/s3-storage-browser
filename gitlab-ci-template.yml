@@ -1,4 +1,15 @@
 # Shared setup templates
+.uv_setup:
+    - dnf install -y wget
+    - wget https://astral.sh/uv/install.sh -O install.sh
+    - sh install.sh
+    - export PATH="$HOME/.local/bin:$PATH"
+    - source $HOME/.local/bin/env
+    - uv --version
+    - uv venv
+    - source .venv/bin/activate
+    - export UV_DEFAULT_INDEX=$PIP_INDEX_URL
+
 .assume_role:
     - aws --version
     - echo $REGION
@@ -20,3 +31,15 @@
     - aws sts get-caller-identity --region $REGION --profile $PROFILE_NAME
     - unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
     - ROLE_ARN=$DEPLOY_ROLE_ARN && PROFILE_NAME=$PROFILE_NAME
+
+.cdk_bootstrap:
+    - npm install -g aws-cdk
+    - !reference [.uv_setup]
+    - uv sync --only-group cdk --project pyproject
+    - uv cache prune --ci
+    # Bootstrap current region (from profile)
+    - if ! aws cloudformation describe-stacks --stack-name CDKToolkit --profile $PROFILE_NAME >/dev/null 2>&1; then cdk bootstrap --cloudformation-execution-policies arn:$PARTITION:iam::$ACCOUNT_ID:policy/$CUSTOM_DEPLOY_POLICY_NAME --profile $PROFILE_NAME; fi
+    # Bootstrap us-east-1 for global resources
+    - if ! aws cloudformation describe-stacks --stack-name CDKToolkit --region us-east-1 --profile $PROFILE_NAME >/dev/null 2>&1; then cdk bootstrap aws://$ACCOUNT_ID/us-east-1 --cloudformation-execution-policies arn:$PARTITION:iam::$ACCOUNT_ID:policy/$CUSTOM_DEPLOY_POLICY_NAME --profile $PROFILE_NAME; fi
+
+
